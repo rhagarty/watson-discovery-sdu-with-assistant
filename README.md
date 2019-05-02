@@ -10,10 +10,13 @@
 
 * Remove code references to calling Disco directly
 * Add action creds to .env
-* Get the dialog to display a header message - "Here is what I found ..."
 * Format Disco results better in chatbot
-* Use Assistant V2 API
-* Modify search type in Search Skills call to use passages
+* Modify search type in Search Skills call to use passages - NOT SUPPORTED
+
+# Notes
+
+* Webhook - beta
+* Search Skill - PLUS or PREMIUM PLAN REQUIRED (CURRENTLY BETA)
 
 # Background
 
@@ -31,7 +34,7 @@ To keep this example as easy as possible, we will use the provided `Custom Care 
 
 But we will need to modify it to handle the case where the user asks an owner's manual type question.
 
-# Create new Assistant dialog skill
+# Create Assistant dialog skill
 
 Click on the `Custom Care Sample Skill` that comes with the Assistant service. You can choose to either duplicate it, or use the original to complete the following steps.
 
@@ -128,6 +131,21 @@ These values are pulled from the `Functions` action panel, click on `API-KEY` wh
 
 > Note: the value before the `:` is the user, and everthing after is the password. Do not include the `:` in either value.
 
+## Notes about action type
+
+When you define the programmatic call, you choose one of the following types:
+
+* **server:**
+
+* **client:** Defines a programmatic call in a standardized format that your external client application can understand. Your client application must use the provided information to run the programmatic call or function, and return the result to the dialog. This type of call basically tells the dialog to pause here and wait for the client application to go do something. The program that the client application runs can be anything that you choose. Be sure to specify the call name and parameter details, and the error message variable name, according to the JSON formatting rules that are outlined later.
+
+* **cloud_function:** Calls an Cloud Functions action directly, and returns the result to the dialog. You must provide a Cloud Functions authentication key with the call. (This type used to be named server. The type server continues to be supported.)
+
+* **web_action:** Calls a Cloud Functions web action. Web actions are annotated Cloud Functions actions that developers can use to program backend logic that a web application can access anonymously, without requiring a Cloud Functions authentication key. Although authentication isn't required, web actions can be secured in the following ways:
+
+  * With an authentication token that is specific to the web action, and can be revoked or changed by the action owner at any time
+  * By passing your Cloud Functions credentials
+
 ## Add Cloud Function creds to application
 
 * The Cloud Function credentials need to be assigned to the Assistant context variable name `my_creds`, and passed in from your application to the Watson Assisant API.
@@ -202,6 +220,8 @@ Configure how the search will respond:
 Modify the "Ask about product" dialog node to call out to the search skill:
 
 ![](doc/source/images/assign-search-skill-to-node.png)
+
+How to use the `Query` option: https://cloud.ibm.com/docs/services/assistant?topic=assistant-dialog-overview#dialog-overview-multimedia
 
 ## Create Assistant instance to combine dialog and search skills:
 
