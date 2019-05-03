@@ -18,10 +18,9 @@ import 'isomorphic-fetch';
 import React from 'react';
 import PropTypes from 'prop-types';
 import Messages from './Messages';
-import { Grid, Header, Card, Input } from 'semantic-ui-react';
+import { Grid, Card, Input } from 'semantic-ui-react';
 
 const utils = require('../lib/utils');
-const util = require('util');  
 
 /**
  * Main React object that contains all objects on the web page.
@@ -63,10 +62,10 @@ class Main extends React.Component {
   sendMessage(text) {
     var { context, conversation } = this.state;
 
-    // context.my_creds = {
-    //   'user':'7a4d1a77-2429-43b1-b6ed-a2b438e15bea',
-    //   'password':'RVVEdpPFLAuuTwFXjjKujPKY0hUOEzt6nQ6O7NwyonHeF7OdAm77Uc34GL2wQHDx'
-    // };
+    context.my_creds = {
+      'user':'7a4d1a77-2429-43b1-b6ed-a2b438e15bea',
+      'password':'RVVEdpPFLAuuTwFXjjKujPKY0hUOEzt6nQ6O7NwyonHeF7OdAm77Uc34GL2wQHDx'
+    };
 
     this.setState({
       context: context
@@ -91,53 +90,77 @@ class Main extends React.Component {
       }
     })
       .then(json => {
-        console.log('+++ ASSISTANT RESULTS +++');
-        const util = require('util');
-        console.log(util.inspect(json, false, null));
+        utils.printAssistantResults(json);
 
-        // console.log('json.output.text[0]: ' + json.output.text[0]);
-        this.printContext(json.context);
-        //console.log('OUTPUT: ' + json.output);//.text[0]);
+        var usingSearchSkill = false;
+        if (usingSearchSkill) {
 
-        // add to message list
-        var response = json.output.generic[0];
-        if (response.response_type === 'text') {
-          conversation.push(
-            { id: conversation.length,
-              text: response.text,
-              owner: 'watson'
-            });
-        } else if (response.response_type == 'search') {
-          // display header response and up to 3 search results
-          conversation.push({
-            id: conversation.length,
-            text: response.header,
-            owner: 'watson'
-          });
-          
-          var maxResponses = 3;
-          var numResponses = 0;
-          var idx = 0;
-          var done = false;
-          while (!done) {
-            if (response.results[idx]) {
-              conversation.push({
-                id: conversation.length,
-                text: response.results[idx].body,
+          // add to message list
+          var response = json.output.generic[0];
+          if (response.response_type === 'text') {
+            conversation.push(
+              { id: conversation.length,
+                text: response.text,
                 owner: 'watson'
               });
-              numResponses = numResponses + 1;
-            } else {
-              done = true;
-            }
+          } else if (response.response_type == 'search') {
+            // display header response and up to 3 search results
+            conversation.push({
+              id: conversation.length,
+              text: response.header,
+              owner: 'watson'
+            });
+            
+            var maxResponses = 3;
+            var numResponses = 0;
+            var idx = 0;
+            var done = false;
+            while (!done) {
+              if (response.results[idx]) {
+                conversation.push({
+                  id: conversation.length,
+                  text: response.results[idx].body,
+                  owner: 'watson'
+                });
+                numResponses = numResponses + 1;
+              } else {
+                done = true;
+              }
 
-            if (numResponses == maxResponses) {
-              done = true;
+              if (numResponses == maxResponses) {
+                done = true;
+              }
+              idx = idx + 1;
             }
-            idx = idx + 1;
+          }
+        } else {
+          console.log('not search skill');
+
+          // results from Assistant will be either be a text string OR
+          // Discovery data returned in the context
+          var passages = utils.getNested(json, 
+            'context', 'skills', 'main skill', 'user_defined', 'webhook_result_1',
+            'response', 'result', 'passages');
+          if (passages) {
+            passages = utils.formatData(passages);
+            
+            // add to message list
+            passages.results.forEach(function(result) {
+              conversation.push(
+                { id: conversation.length,
+                  text: result.text,
+                  owner: 'watson'});
+            });
+          } else {
+            // add to message list
+            conversation.push(
+              { id: conversation.length,
+                text: json.output.generic[0].text,
+                owner: 'watson'
+              });
           }
         }
-        
+
         this.setState({
           conversation: conversation,
           context: json.context,
@@ -154,19 +177,6 @@ class Main extends React.Component {
         // eslint-disable-next-line no-console
         console.error(response);
       });
-  }
-
-  /* Log Watson Assistant context values, so we can follow along with its logic. */
-  printContext(context) {
-    console.log('Dialog Stack:');
-    console.log(util.inspect(context, false, null));
-    // if (context.system) {
-      // if (context.system.dialog_stack) {
-        // console.log(
-        //   '     dialog_stack: [' + util.inspect(context.system.dialog_stack, false, null) + ']');
-        // console.log('Dialog Stack:');
-        // console.log(util.inspect(context, false, null));
-      // }    }
   }
   
   handleOnChange(event) {
@@ -195,7 +205,7 @@ class Main extends React.Component {
     }
   }
 
-  getListItems() {
+  getMessages() {
     const { conversation } = this.state;
 
     return (
@@ -222,7 +232,7 @@ class Main extends React.Component {
                 <Card.Header>Document Search ChatBot</Card.Header>
               </Card.Content>
               <Card.Content>
-                {this.getListItems()}
+                {this.getMessages()}
               </Card.Content>
               <Input
                 icon='compose'

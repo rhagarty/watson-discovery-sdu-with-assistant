@@ -173,15 +173,17 @@ Go to [How to create a Cloud Functions action](#how-to-create-a-cloud-functions-
 
 ![](doc/source/images/assistant-enable-webhook-for-node.png)
 
-* Then you can add params, change name of return variable, etc.
+* Add the `input` key parameter as shown below - this will pass the user input query to the Discovery service. As a default, the results will be returned in `$webhook_result_1`.
 
 ![](doc/source/images/assistant-node-config-webhook.png)
 
 ## Test in Assistant Tooling
 
-* Using the `Try it` feature, add the context variable `my_creds` and see if it works (probably won't return anything meaningful in the test window, but you should NOT get an error due to credentials).
+* Using the `Try it` feature, add the context variable `my_creds` and see if it works. Should not see an error, and if you click on `Manage Context`, you see a new variable added named `$webhook_result_1`.
 
 > Note: You must enter a response to trigger the assistant dialog node that calls the action.
+
+NEW SCREENSHOT WITHOUT webhook varaible.
 
 ![](doc/source/images/assistant-webhook-context-vars.png)
 
@@ -194,6 +196,57 @@ These values are pulled from the `Functions` action panel, click on `API-KEY` wh
 ```
 
 > Note: the value before the `:` is the user, and after is the password. Do not include the `:` in either value.
+
+## Add Cloud Function creds to application
+
+* The Cloud Function credentials need to be assigned to the Assistant context variable name `my_creds`, and passed in from your application to the Watson Assisant API.
+
+```javascript
+    context.my_creds = {
+      'user':'7a4d1a77-2429-xxxx-xxxx-a2b438e15bea',
+      'password':'RVVEdpPFLAuuTwFXjjKujPKY0hUOEztxxxxxxxxxF7OdAm77Uc34GL2wQHDx'
+    };
+```
+
+## How results are returned to the application
+
+Results are returned as part of the Assistant context, in the `webhook_result_1` object:
+
+```
+context:
+   { global: { system: { turn_count: 1 } },
+     skills:
+      { 'main skill':
+         { user_defined:
+            { webhook_result_1:
+               { activationId: '9e28cd924fe74774a8cd924fe7b774e5',
+                 annotations:
+                  [ { key: 'path', value: 'IBM Cloud Storage_dev/disco-action' },
+                    { key: 'waitTime', value: 544 },
+                    { key: 'kind', value: 'nodejs:8' },
+                    { key: 'timeout', value: false },
+                    { key: 'limits',
+                      value: { concurrency: 1, logs: 10, memory: 256, timeout: 60000 } },
+                    { key: 'initTime', value: 453 } ],
+                 duration: 1435,
+                 end: 1556854584238,
+                 logs: [],
+                 name: 'disco-action',
+                 namespace: 'IBM Cloud Storage_dev',
+                 publish: false,
+                 response:
+                  { result:
+                     { matching_results: 9,
+                       passages:
+                        [ { document_id: '3a5efee70d8cc9d70e2b94d22c15e2d1_2',
+                            end_offset: 2791,
+                            field: 'text',
+                            passage_score: 6.752501692678998,
+                            passage_text:
+                             'Specify what the heat pump runs when the O/B Reversing Valve is engaged: On Cool runs cooling when O/B engages (most cases), or On Heat runs heating when O/B engages. 4. Touch Next. You will be returned to the Equipment configuration menu. Furnaces/Boilers If you have a furnace or boiler installed: 1. Select the heating menu. 2. Configure the heater type',
+                            start_offset: 2435 },
+
+```
 
 # Search Skill
 
@@ -242,6 +295,36 @@ Then press the `Preview` URL:
 Then use the chatbot to test accessing the search skill:
 
 ![](doc/source/images/preview-example.png)
+
+## How results are returned to the application
+
+Normal results will be returned in the Assistant response object:
+
+```
+{ output:
+   { generic:
+      [ { response_type: 'text',
+          text: 'Would you like me to transfer you to a representative?' } ],
+     intents:
+      [ { intent: 'General_Connect_to_Agent',
+          confidence: 0.9979484558105469 } ],
+     entities: []
+    }
+}
+```
+
+If the result is from the search skill:
+
+```
+{ output:
+   { generic:
+      [ { response_type: 'search',
+          header: 'I searched my knowledge base and found this information which might be useful:',
+          results:
+           [ { body: 'Do you hear that? That’s the sound of hundreds of thousands of ecobee-ers welcoming you to the hive. Congratulations on the purchase of your customized web portal, visit ecobee.com and click on the Login link. To select a tile, touch or click on it. To close a tile and return back to the main screen, touch or click (top-right corner).',
+               title: '["Overview"]',
+               url: null },
+```
 
 # Configure credentials
 
@@ -312,4 +395,6 @@ Sample questions:
 
 ![](doc/source/images/action-endpoint.png)
 
-* Test the action by executing the `curl` command shown at the bottom of the panel.
+* Test the action by executing the `curl` command shown at the bottom of the panel, or from the `Code` panel, click the `Invoke` button. This will open up an `Activation` window where the action will be executed and the results displayed. Note that the values you have set in the `Parameters` panel will be passed into the action.
+
+![](doc/source/images/action-test.png)
