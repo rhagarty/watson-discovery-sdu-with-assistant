@@ -14,17 +14,14 @@
  * the License.
  */
 
-const util = require('util');
+ const util = require('util');
 
 module.exports = {
   setAssistantId(assistantId) {
     this.assistant_id = assistantId;
-    console.log('assistantId 3: ' + assistantId);
-    console.log('this.assistant_id 3: ' + this.assistant_id);
   },
   setSessionId(sessionId) {
     this.session_id = sessionId;
-    console.log('this.session_id 3: ' + this.session_id);
   },
   message(messageOpts) {
     const params = Object.assign({

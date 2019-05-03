@@ -24,6 +24,7 @@ require('isomorphic-fetch');
 const Promise = require('bluebird');
 const messageBuilder = require('./message-builder');
 const assistant = require('./watson-assistant-service');
+
 const utils = require('../lib/utils');
 
 /**
@@ -63,7 +64,11 @@ function createServer() {
     params.context = req.body.context;
     params.input = {
       message_type: 'text',
-      text: req.body.message
+      text: req.body.message,
+      options: {
+        return_context: true,
+        debug: true
+      }
     };
     var messagesParams = messageBuilder.message(params);
     
@@ -72,6 +77,8 @@ function createServer() {
       if (err) {
         return res.status(err.code || 500).json(err);
       }
+
+      utils.printAssistantResults(data);
       return res.json(updateMessage(messagesParams, data));
     });
   });
